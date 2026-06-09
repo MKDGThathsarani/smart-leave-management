@@ -1,0 +1,83 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id            Int       @id @default(autoincrement())
+  email         String    @unique
+  password      String
+  name          String
+  employeeId    String    @unique
+  department    String
+  role          Role      @default(STAFF)
+  joinDate      DateTime  @default(now())
+  casualBalance Int       @default(12)
+  sickBalance   Int       @default(10)
+  annualBalance Int       @default(15)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  
+  leaves        Leave[]
+  approvals     Approval[]
+}
+
+model Leave {
+  id          Int         @id @default(autoincrement())
+  userId      Int
+  user        User        @relation(fields: [userId], references: [id])
+  leaveType   LeaveType   @default(CASUAL)
+  startDate   DateTime
+  endDate     DateTime
+  reason      String      @db.Text
+  documentUrl String?
+  status      LeaveStatus @default(PENDING_HOD)
+  appliedAt   DateTime    @default(now())
+  totalDays   Int
+  
+  approvals   Approval[]
+}
+
+model Approval {
+  id          Int      @id @default(autoincrement())
+  leaveId     Int
+  leave       Leave    @relation(fields: [leaveId], references: [id])
+  approverId  Int
+  approver    User     @relation(fields: [approverId], references: [id])
+  level       Int
+  status      ApprovalStatus @default(PENDING)
+  comments    String?  @db.Text
+  approvedAt  DateTime?
+}
+
+enum Role {
+  STAFF
+  HOD
+  DEAN
+  ADMIN
+}
+
+enum LeaveType {
+  CASUAL
+  SICK
+  ANNUAL
+  STUDY
+  WITHOUT_PAY
+}
+
+enum LeaveStatus {
+  PENDING_HOD
+  PENDING_DEAN
+  APPROVED
+  REJECTED
+}
+
+enum ApprovalStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
